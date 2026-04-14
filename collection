@@ -1,0 +1,111 @@
+{
+	"info": {
+		"name": "Rock Bands API - Projeto Final",
+		"_postman_id": "rock-bands-api-v1",
+		"description": "Collection para gerenciamento de bandas de rock, com autenticação JWT, paginação e filtros.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth: Registrar Usuário",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"rockstar_thiago\",\n    \"password\": \"guitar_solo_123\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:8080/register"
+			}
+		},
+		{
+			"name": "Auth: Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"if (jsonData.token) {",
+							"    pm.environment.set(\"token\", jsonData.token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"rockstar_thiago\",\n    \"password\": \"guitar_solo_123\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:8080/login"
+			}
+		},
+		{
+			"name": "Bands: Listar (Filtros, Paginação e Ordenação)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/bands?page=1&limit=5&genre=Grunge&sort=formedYear&order=DESC",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["bands"],
+					"query": [
+						{ "key": "page", "value": "1", "description": "Página atual" },
+						{ "key": "limit", "value": "5", "description": "Itens por página" },
+						{ "key": "genre", "value": "Grunge", "description": "Filtro por gênero (ex: Grunge, Heavy Metal, Progressive Rock)" },
+						{ "key": "sort", "value": "formedYear", "description": "Campo de ordenação (name ou formedYear)" },
+						{ "key": "order", "value": "DESC", "description": "Direção da ordenação (ASC ou DESC)" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Bands: Criar Nova (Requer Token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Pink Floyd\",\n    \"genre\": \"Progressive Rock\",\n    \"formedYear\": 1965,\n    \"active\": false\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:8080/bands"
+			}
+		},
+		{
+			"name": "Bands: Atualizar (Requer Token)",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Pink Floyd (Updated)\",\n    \"active\": true\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:8080/bands/1"
+			}
+		},
+		{
+			"name": "Bands: Deletar (Requer Token)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+				],
+				"url": "http://localhost:8080/bands/1"
+			}
+		}
+	]
+}
