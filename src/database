@@ -1,0 +1,58 @@
+const knex = require('knex')({
+  client: 'sqlite3',
+  connection: { filename: "./database.sqlite" },
+  useNullAsDefault: true
+});
+
+async function setup() {
+  // Limpeza das tabelas existentes para evitar conflitos de esquema
+  await knex.schema.dropTableIfExists('bands');
+  await knex.schema.dropTableIfExists('users');
+
+  await knex.schema.createTable('users', table => {
+    table.increments('id').primary();
+    table.string('username').unique().notNullable();
+    table.string('password').notNullable();
+  });
+
+  await knex.schema.createTable('bands', table => {
+    table.increments('id').primary();
+    table.string('name').notNullable();
+    table.string('genre').notNullable();
+    table.integer('formedYear');
+    table.boolean('active').defaultTo(true);
+    table.integer('user_id').references('id').inTable('users');
+  });
+
+  const rockBands = [
+    { name: 'Queen', genre: 'Rock', formedYear: 1970 },
+    { name: 'Led Zeppelin', genre: 'Hard Rock', formedYear: 1968 },
+    { name: 'Nirvana', genre: 'Grunge', formedYear: 1987 },
+    { name: 'AC/DC', genre: 'Hard Rock', formedYear: 1973 },
+    { name: 'Pink Floyd', genre: 'Progressive Rock', formedYear: 1965 },
+    { name: 'Metallica', genre: 'Heavy Metal', formedYear: 1981 },
+    { name: 'Guns N Roses', genre: 'Hard Rock', formedYear: 1985 },
+    { name: 'The Rolling Stones', genre: 'Rock', formedYear: 1962 },
+    { name: 'The Beatles', genre: 'Rock/Pop', formedYear: 1960 },
+    { name: 'Black Sabbath', genre: 'Heavy Metal', formedYear: 1968 },
+    { name: 'Deep Purple', genre: 'Hard Rock', formedYear: 1968 },
+    { name: 'Iron Maiden', genre: 'Heavy Metal', formedYear: 1975 },
+    { name: 'Pearl Jam', genre: 'Grunge', formedYear: 1990 },
+    { name: 'Alice in Chains', genre: 'Grunge', formedYear: 1987 },
+    { name: 'The Who', genre: 'Rock', formedYear: 1964 },
+    { name: 'Red Hot Chili Peppers', genre: 'Funk Rock', formedYear: 1983 },
+    { name: 'Linkin Park', genre: 'Nu Metal', formedYear: 1996 },
+    { name: 'Foo Fighters', genre: 'Alternative Rock', formedYear: 1994 },
+    { name: 'Arctic Monkeys', genre: 'Indie Rock', formedYear: 2002 },
+    { name: 'The Doors', genre: 'Psychedelic Rock', formedYear: 1965 }
+  ];
+
+  await knex('bands').insert(rockBands);
+  console.log("🎸 Banco de dados 'Rock Bands' inicializado com 20 registros!");
+  
+  if (require.main === module) process.exit();
+}
+
+if (require.main === module) setup();
+
+module.exports = knex;
