@@ -1,0 +1,113 @@
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const db = require('./database');
+const { body, validationResult } = require('express-validator');
+
+const app = express();
+app.use(express.json());
+
+const SECRET = process.env.JWT_SECRET || "MINHA_CHAVE_SUPER_SECRETA_ROCK_ROLL";
+
+const auth = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: "Token não fornecido" });
+  
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    req.userId = decoded.id;
+    next();
+  } catch {
+    res.status(401).json({ error: "Token inválido ou expirado" });
+  }
+};
+
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: "Dados incompletos" });
+
+  const hash = await bcrypt.hash(password, 10);
+  try {
+    const [id] = await db('users').insert({ username, password: hash });
+    res.status(201).json({ id, username });
+  } catch {
+    res.status(400).json({ error: "Usuário já existe" });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await db('users').where({ username }).first();
+  
+  if (user && await bcrypt.compare(password, user.password)) {
+    const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
+    return res.json({ token });
+  }
+  res.status(401).json({ error: "Credenciais inválidas" });
+});
+
+app.get('/bands', async (req, res) => {
+  const { page = 1, limit = 5, genre, sort = 'name', order = 'asc' } = req.query;
+  const query = db('bands');
+
+  if (genre) query.where('genre', 'like', `%${genre}%`);
+
+  const data = await query.clone()
+    .limit(limit)
+    .offset((page - 1) * limit)
+    .orderBy(sort, order);
+
+  const count = await query.clone().count('id as total').first();
+
+  res.json({
+    total: count.total,
+    page: Number(page),
+    limit: Number(limit),
+    data
+  });
+});
+
+app.post('/bands', auth, [
+  body('name').isLength({ min: 2 }).withMessage("Nome da banda muito curto"),
+  body('genre').notEmpty().withMessage("Gênero é obrigatório")
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+  try {
+    const [id] = await db('bands').insert({ 
+      ...req.body, 
+      user_id: req.userId 
+    });
+    res.status(201).json({ id, ...req.body });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao salvar banda" });
+  }
+});
+
+app.put('/bands/:id', auth, async (req, res) => {
+  const updatedRows = await db('bands').where({ id: req.params.id }).update(req.body);
+  
+  if (updatedRows) {
+    res.json({ success: true, message: "Banda atualizada com sucesso" });
+  } else {
+    res.status(404).json({ error: "Banda não encontrada" });
+  }
+});
+
+app.delete('/bands/:id', auth, async (req, res) => {
+  const deletedRows = await db('bands').where({ id: req.params.id }).del();
+  
+  if (deletedRows) {
+    res.status(204).send();
+  } else {
+    res.status(404).json({ error: "Banda não encontrada" });
+  }
+});
+
+if (require.main === module) {
+  const PORT = 8080;
+  app.listen(PORT, () => console.log(` Rock API rodando em http://localhost:${PORT}`));
+}
+
+module.exports = app;
