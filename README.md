@@ -1,22 +1,17 @@
-#API Rock Bands Pro
+#  Rock Bands API 
 
-API com CRUD completo, Autenticação JWT e Banco de Dados SQLite.
+API RESTful para gerenciamento de um catálogo de bandas de rock, desenvolvida com foco em performance e organização. O projeto conta com autenticação JWT, filtros avançados e persistência em banco de dados SQLite.
 
-Bash
-npm install
-npm run setup-db
-npm start
+##  Tecnologias Utilizadas
+- **Node.js** & **Express.js**
+- **SQLite3** & **Knex.js** (Persistência e Query Building)
+- **JSON Web Token** (Segurança e Autenticação)
+- **BcryptJS** (Criptografia de senhas)
+- **Mocha & Supertest** (Testes automatizados)
 
-#Rotas
+##  Arquitetura
+O projeto utiliza uma estrutura modular inspirada no padrão MVC:
+- **Database:** Configuração e inicialização do banco SQLite via Knex.
+- **Routes:** Definição dos endpoints e proteção de rotas.
+- **Validation:** Uso de middlewares para garantir a integridade dos dados.
 
-POST /register: Criar novo usuário.
-
-POST /login: Obter token JWT para acesso.
-
-GET /bands: Listagem de bandas com paginação, filtros e ordenação.
-
-POST /bands: Criar nova banda (Requer Token).
-
-PUT /bands/:id: Atualizar banda existente (Requer Token).
-
-DELETE /bands/:id: Remover banda do sistema (Requer Token).
